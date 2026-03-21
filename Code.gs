@@ -64,10 +64,11 @@ function setupSheet() {
 }
 
 // ─── POST: recibe un nuevo formulario ─────────────────────────────────────────
+// El body viene como JSON con Content-Type: text/plain (evita preflight CORS)
 function doPost(e) {
   try {
     const sheet  = setupSheet();
-    const params = e.parameter;
+    const params = JSON.parse(e.postData.contents);
 
     const row = [
       new Date().toISOString(),            // Timestamp
@@ -86,7 +87,7 @@ function doPost(e) {
 
     sheet.appendRow(row);
 
-    return buildResponse({ success: true, message: 'Solicitud registrada correctamente.' });
+    return buildResponse({ success: true });
   } catch (err) {
     return buildResponse({ success: false, error: err.toString() });
   }

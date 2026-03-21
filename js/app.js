@@ -9,6 +9,10 @@
 
 const SCRIPT_URL = 'https://script.google.com/a/macros/zetabe.com/s/AKfycbwzEsXeFYYJ-e5SKKq8VgUSUvK6M74lUfv_HUqtmwSQaxNznKblMPwJd71EctaSBJfH/exec';
 
+// URL del CSV público de Google Sheets.
+// Para obtenerla: Archivo → Compartir → Publicar en la web → Hoja "Solicitudes" → CSV → Publicar → copiar URL
+const SHEET_CSV_URL = 'YOUR_GOOGLE_SHEETS_CSV_URL_HERE';
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
 function formatDate(ts) {
   if (!ts) return '';
@@ -124,12 +128,12 @@ function initForm() {
       await fetch(SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams(data).toString(),
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(data),
       });
       showSuccess();
     } catch (err) {
-      showSuccess(); // optimistic — data was sent even if we can't read the response
+      showSuccess();
     } finally {
       setSubmitting(false);
     }
@@ -196,13 +200,43 @@ function showSuccess() {
 
 // ─── Data Loading ─────────────────────────────────────────────────────────────
 async function loadData() {
+  if (SHEET_CSV_URL === 'YOUR_GOOGLE_SHEETS_CSV_URL_HERE') {
+    renderAll([]);
+    return;
+  }
   try {
-    const res = await fetch(SCRIPT_URL);
-    const json = await res.json();
-    renderAll(Array.isArray(json) ? json : []);
+    const res = await fetch(SHEET_CSV_URL);
+    const csv = await res.text();
+    renderAll(parseCSV(csv));
   } catch {
     renderAll([]);
   }
+}
+
+function parseCSV(csv) {
+  const lines = csv.trim().split('\n');
+  if (lines.length < 2) return [];
+  const headers = splitCSVRow(lines[0]);
+  return lines.slice(1).map(line => {
+    const vals = splitCSVRow(line);
+    const obj = {};
+    headers.forEach((h, i) => obj[h.trim()] = (vals[i] || '').trim());
+    return obj;
+  }).filter(r => r['Nombre']);
+}
+
+function splitCSVRow(row) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < row.length; i++) {
+    const ch = row[i];
+    if (ch === '"') { inQuotes = !inQuotes; }
+    else if (ch === ',' && !inQuotes) { result.push(current); current = ''; }
+    else { current += ch; }
+  }
+  result.push(current);
+  return result;
 }
 
 function renderAll(data) {
