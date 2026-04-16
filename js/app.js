@@ -54,24 +54,76 @@ function badgeCompromiso(val) {
 
 // ─── Init ────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  initPageTabs();
   initNav();
   initForm();
   loadData();
 });
 
+// ─── Page Tabs (Hub vs Projects) ────────────────────────────────────────────
+function initPageTabs() {
+  const tabs = document.querySelectorAll('.page-tab');
+  const pages = document.querySelectorAll('.page-content');
+  const navHub = document.getElementById('navHub');
+  const navProjects = document.getElementById('navProjects');
+  const logoText = document.querySelector('.logo-text');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.dataset.page;
+
+      // Update tab active state
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+
+      // Show/hide pages
+      pages.forEach(p => p.classList.remove('active'));
+      const activePage = document.getElementById('page-' + target);
+      if (activePage) activePage.classList.add('active');
+
+      // Switch nav links
+      if (navHub && navProjects) {
+        navHub.style.display = target === 'hub' ? '' : 'none';
+        navProjects.style.display = target === 'projects' ? '' : 'none';
+      }
+
+      // Update logo text
+      if (logoText) {
+        if (target === 'hub') {
+          logoText.innerHTML = 'AI Strategy <span class="logo-accent">Hub</span>';
+        } else {
+          logoText.innerHTML = 'AI Transformation <span class="logo-accent">Team</span>';
+        }
+      }
+
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Close mobile nav if open
+      document.querySelectorAll('.nav').forEach(n => n.classList.remove('open'));
+    });
+  });
+}
+
 // ─── Navigation ─────────────────────────────────────────────────────────────
 function initNav() {
   const toggle = document.getElementById('navToggle');
-  const nav = document.querySelector('.nav');
+  const nav = document.getElementById('navHub');
   if (!toggle || !nav) return;
 
   toggle.addEventListener('click', () => {
-    nav.classList.toggle('open');
+    // Toggle the currently visible nav
+    const hubNav = document.getElementById('navHub');
+    const projNav = document.getElementById('navProjects');
+    const activeNav = (hubNav && hubNav.style.display !== 'none') ? hubNav : projNav;
+    if (activeNav) activeNav.classList.toggle('open');
   });
 
   // Close on nav link click
-  nav.querySelectorAll('.nav-link').forEach(link => {
-    link.addEventListener('click', () => nav.classList.remove('open'));
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+      document.querySelectorAll('.nav').forEach(n => n.classList.remove('open'));
+    });
   });
 
   // Active state on scroll

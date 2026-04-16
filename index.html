@@ -14,21 +14,41 @@
 
   <!-- HEADER -->
   <header class="header">
+    <!-- Page Tabs -->
+    <div class="page-tabs">
+      <button class="page-tab active" data-page="hub">
+        <span class="page-tab-icon">⬡</span>
+        AI Strategy Hub
+      </button>
+      <button class="page-tab" data-page="projects">
+        <span class="page-tab-icon">◈</span>
+        Proyectos AI Transformation
+      </button>
+    </div>
+
     <div class="header-inner">
       <div class="logo">
         <span class="logo-icon">⬡</span>
         <span class="logo-text">AI Strategy <span class="logo-accent">Hub</span></span>
       </div>
-      <nav class="nav">
+      <nav class="nav" id="navHub">
         <a href="#formulario" class="nav-link">Enviar Solicitud</a>
         <a href="#dashboard" class="nav-link">Dashboard</a>
         <a href="#repositorio" class="nav-link">Repositorio</a>
+      </nav>
+      <nav class="nav" id="navProjects" style="display:none">
+        <span class="nav-link nav-link-muted">Explora las herramientas del equipo</span>
       </nav>
       <button class="nav-toggle" id="navToggle" aria-label="Menú">
         <span></span><span></span><span></span>
       </button>
     </div>
   </header>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PAGE 1 — AI STRATEGY HUB
+  ═══════════════════════════════════════════════════════ -->
+  <div id="page-hub" class="page-content active">
 
   <!-- HERO -->
   <section class="hero">
@@ -323,6 +343,71 @@
       </div>
     </div>
   </section>
+
+  </div><!-- /page-hub -->
+
+  <!-- ═══════════════════════════════════════════════════════
+       PAGE 2 — PROYECTOS AI TRANSFORMATION TEAM
+  ═══════════════════════════════════════════════════════ -->
+  <div id="page-projects" class="page-content">
+
+    <!-- Projects Hero -->
+    <section class="hero">
+      <div class="hero-inner">
+        <div class="hero-badge">AI Transformation Team</div>
+        <h1 class="hero-title">Nuestros <span class="accent">Proyectos</span></h1>
+        <p class="hero-sub">Explora las herramientas e iniciativas desarrolladas por el equipo. Haz clic en cualquier proyecto para acceder directamente.</p>
+      </div>
+      <div class="hero-grid-bg"></div>
+    </section>
+
+    <!-- Projects Grid -->
+    <section class="section">
+      <div class="container">
+        <div class="projects-grid">
+
+          <!-- Proyecto: Nexus -->
+          <a href="https://nicolasorjuela195-del.github.io/nexus/nexus_make.html" target="_blank" class="project-card">
+            <div class="project-card-cover project-card-cover-img">
+              <img src="img/nexus-preview.png" alt="NEXUS preview" class="project-card-img" />
+              <span class="project-card-version">v4</span>
+            </div>
+            <div class="project-card-body">
+              <h3 class="project-card-title">NEXUS</h3>
+              <p class="project-card-subtitle">AI Report Generator</p>
+              <p class="project-card-desc">Sube tu Plan Digital en Excel, cruza datos con BigQuery y genera reportes con insights de IA automáticamente.</p>
+              <div class="project-card-footer">
+                <span class="project-card-tag">Reportes</span>
+                <span class="project-card-tag">BigQuery</span>
+                <span class="project-card-tag">IA</span>
+                <span class="project-card-arrow">→</span>
+              </div>
+            </div>
+          </a>
+
+          <!-- Placeholder: Próximamente -->
+          <div class="project-card project-card-soon">
+            <div class="project-card-cover project-card-cover-soon">
+              <div class="project-card-cover-pattern"></div>
+              <div class="project-card-cover-icon">
+                <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="24" cy="24" r="18" stroke="currentColor" stroke-width="2.5" stroke-dasharray="4 4"/>
+                  <path d="M24 16v8l5 5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </div>
+            <div class="project-card-body">
+              <h3 class="project-card-title" style="color: var(--text-dim)">Próximamente</h3>
+              <p class="project-card-subtitle" style="color: var(--text-dim)">Nuevo proyecto en desarrollo</p>
+              <p class="project-card-desc" style="color: var(--text-dim)">Nuevas herramientas del equipo se irán sumando a este repositorio.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /page-projects -->
 
   <!-- FOOTER -->
   <footer class="footer">
