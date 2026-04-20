@@ -194,7 +194,7 @@ function initLoginScreen() {
 
     const { error } = await _supabase.auth.signInWithOtp({
       email,
-      options: { shouldCreateUser: false }, // solo usuarios pre-autorizados
+      options: { shouldCreateUser: true }, // crea cuenta si no existe; acceso controlado por profiles
     });
 
     btn.disabled = false;
