@@ -727,6 +727,13 @@ a.project-card:hover .project-card-arrow { transform: translateX(4px); }
   color: #fca5a5; font-size: 0.85rem; text-align: center;
 }
 .unauth-icon { font-size: 3rem; text-align: center; margin: 20px 0 16px; }
+.magic-success {
+  margin-top: 16px; padding: 10px 14px;
+  background: rgba(34,197,94,0.1);
+  border: 1px solid rgba(34,197,94,0.3);
+  border-radius: var(--radius);
+  color: #86efac; font-size: 0.85rem; text-align: center;
+}
 
 /* ═══════════════════════════════════════════════════════
    USER BAR (header right side)

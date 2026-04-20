@@ -145,41 +145,70 @@ async function handleSession(session) {
 // ─── Login Screen ────────────────────────────────────────────────────────────
 
 function initLoginScreen() {
-  // Evitar doble-bind de eventos
-  const googleBtn  = document.getElementById('btn-google-login');
-  const loginForm  = document.getElementById('form-login');
-  const loginError = document.getElementById('login-error');
+  // Reset listeners clonando nodos
+  ['form-login', 'btn-magic-link'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.replaceWith(el.cloneNode(true));
+  });
 
-  if (googleBtn) {
-    googleBtn.replaceWith(googleBtn.cloneNode(true)); // reset listeners
-    document.getElementById('btn-google-login').addEventListener('click', async () => {
-      if (!_supabase) return;
-      await _supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: window.location.origin },
-      });
+  // ── Email + Contraseña ───────────────────────────────────
+  document.getElementById('form-login')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email    = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const errDiv   = document.getElementById('login-error');
+    const successDiv = document.getElementById('magic-success');
+
+    if (!email || !password) {
+      errDiv.textContent = 'Ingresa tu correo y contraseña.';
+      errDiv.hidden = false;
+      return;
+    }
+
+    const { error } = await _supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      errDiv.textContent = 'Correo o contraseña incorrectos. Verifica tus datos.';
+      errDiv.hidden = false;
+      if (successDiv) successDiv.hidden = true;
+    } else {
+      errDiv.hidden = true;
+    }
+  });
+
+  // ── Magic Link ───────────────────────────────────────────
+  document.getElementById('btn-magic-link')?.addEventListener('click', async () => {
+    const email      = document.getElementById('login-email').value.trim();
+    const errDiv     = document.getElementById('login-error');
+    const successDiv = document.getElementById('magic-success');
+
+    if (!email) {
+      errDiv.textContent = 'Escribe tu correo primero.';
+      errDiv.hidden = false;
+      if (successDiv) successDiv.hidden = true;
+      return;
+    }
+
+    const btn = document.getElementById('btn-magic-link');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    const { error } = await _supabase.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: false }, // solo usuarios pre-autorizados
     });
-  }
 
-  if (loginForm) {
-    loginForm.replaceWith(loginForm.cloneNode(true)); // reset listeners
-    document.getElementById('form-login').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email    = document.getElementById('login-email').value.trim();
-      const password = document.getElementById('login-password').value;
-      const errDiv   = document.getElementById('login-error');
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> Enviar link al correo`;
 
-      if (!email || !password) return;
-
-      const { error } = await _supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        errDiv.textContent = 'Correo o contraseña incorrectos. Verifica tus datos.';
-        errDiv.hidden = false;
-      } else {
-        errDiv.hidden = true;
-      }
-    });
-  }
+    if (error) {
+      errDiv.textContent = 'No se pudo enviar el link. Verifica que tu correo esté autorizado.';
+      errDiv.hidden = false;
+      if (successDiv) successDiv.hidden = true;
+    } else {
+      if (successDiv) successDiv.hidden = false;
+      errDiv.hidden = true;
+    }
+  });
 }
 
 // ─── User Menu (logout) ───────────────────────────────────────────────────────
