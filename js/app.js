@@ -57,6 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initPageTabs();
   initNav();
   initForm();
+  initProjects();
   loadData();
 });
 
@@ -101,6 +102,11 @@ function initPageTabs() {
 
       // Close mobile nav if open
       document.querySelectorAll('.nav').forEach(n => n.classList.remove('open'));
+
+      // Reload projects when entering projects tab
+      if (target === 'projects' && typeof loadProjects === 'function') {
+        loadProjects();
+      }
     });
   });
 }
@@ -574,4 +580,313 @@ function initRepoFilters(data) {
   document.getElementById('repoSearch')?.addEventListener('input', applyRepoFilters);
   document.getElementById('repoFilterPais')?.addEventListener('change', applyRepoFilters);
   document.getElementById('repoFilterEstado')?.addEventListener('change', applyRepoFilters);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PROYECTOS — carga dinámica + modal de agregar
+// ═══════════════════════════════════════════════════════════════════════════
+
+const PROJECTS_API = '/.netlify/functions/api?resource=proyectos';
+const MAX_IMAGE_SIZE = 1.5 * 1024 * 1024; // 1.5 MB
+
+function initProjects() {
+  initProjectModal();
+  // Cargar proyectos al iniciar si la pestaña de proyectos está activa
+  if (document.getElementById('page-projects')?.classList.contains('active')) {
+    loadProjects();
+  }
+}
+
+// ─── Cargar proyectos desde Supabase ───────────────────────────────────────
+async function loadProjects() {
+  const grid = document.getElementById('projectsGrid');
+  const loading = document.getElementById('projectsLoading');
+  const empty = document.getElementById('projectsEmpty');
+
+  if (!grid) return;
+
+  loading.hidden = false;
+  empty.hidden = true;
+  grid.innerHTML = '';
+
+  try {
+    const res = await fetch(PROJECTS_API);
+    if (!res.ok) throw new Error('Error de servidor');
+    const projects = await res.json();
+
+    loading.hidden = true;
+
+    if (!Array.isArray(projects) || projects.length === 0) {
+      empty.hidden = false;
+      return;
+    }
+
+    grid.innerHTML = projects.map(renderProjectCard).join('');
+  } catch (err) {
+    console.error('Error cargando proyectos:', err);
+    loading.hidden = true;
+    empty.hidden = false;
+    empty.querySelector('h3').textContent = 'No se pudieron cargar los proyectos';
+    empty.querySelector('p').textContent = 'Intenta recargar la página.';
+  }
+}
+
+// ─── Render de una tarjeta de proyecto ─────────────────────────────────────
+function renderProjectCard(p) {
+  const nombre = escapeHtml(p.nombre || 'Sin nombre');
+  const descripcion = escapeHtml(p.descripcion || '');
+  const owner = escapeHtml(p.owner || '—');
+  const link = p.link || '#';
+  const initials = getInitials(p.owner || '?');
+
+  const coverHtml = p.imagen_url
+    ? `<img src="${escapeHtml(p.imagen_url)}" alt="${nombre}" class="project-card-img" />`
+    : `<div class="project-card-cover-pattern"></div>
+       <div class="project-card-cover-icon">
+         <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+           <rect x="6" y="10" width="36" height="28" rx="3" stroke="currentColor" stroke-width="2.5"/>
+           <path d="M6 18h36" stroke="currentColor" stroke-width="2.5"/>
+           <circle cx="12" cy="14" r="1.5" fill="currentColor"/>
+           <circle cx="17" cy="14" r="1.5" fill="currentColor"/>
+           <circle cx="22" cy="14" r="1.5" fill="currentColor"/>
+         </svg>
+       </div>`;
+
+  const coverClass = p.imagen_url
+    ? 'project-card-cover project-card-cover-img'
+    : 'project-card-cover';
+
+  const coverStyle = p.imagen_url ? '' : 'style="--accent-1: #FFD700; --accent-2: #f97316;"';
+
+  return `
+    <a href="${escapeHtml(link)}" target="_blank" rel="noopener" class="project-card">
+      <div class="${coverClass}" ${coverStyle}>
+        ${coverHtml}
+      </div>
+      <div class="project-card-body">
+        <h3 class="project-card-title">${nombre}</h3>
+        <p class="project-card-desc">${descripcion}</p>
+        <div class="project-card-footer">
+          <span class="project-card-arrow">→</span>
+        </div>
+        <div class="project-card-owner">
+          <span class="project-card-owner-icon">${escapeHtml(initials)}</span>
+          <span class="project-card-owner-label">Owner</span>
+          <span class="project-card-owner-name">${owner}</span>
+        </div>
+      </div>
+    </a>
+  `;
+}
+
+function getInitials(name) {
+  const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// ─── Modal de agregar proyecto ─────────────────────────────────────────────
+function initProjectModal() {
+  const modal = document.getElementById('projectModal');
+  const openBtn = document.getElementById('openProjectModalBtn');
+  const closeBtn = document.getElementById('closeProjectModalBtn');
+  const cancelBtn = document.getElementById('cancelProjectBtn');
+  const form = document.getElementById('projectForm');
+  const success = document.getElementById('projectSuccess');
+  const closeSuccessBtn = document.getElementById('closeSuccessBtn');
+
+  if (!modal || !openBtn) return;
+
+  const openModal = () => {
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+    form.hidden = false;
+    success.hidden = true;
+    form.reset();
+    clearImagePreview();
+    clearProjectErrors();
+  };
+  const closeModal = () => {
+    modal.hidden = true;
+    document.body.style.overflow = '';
+  };
+
+  openBtn.addEventListener('click', openModal);
+  closeBtn?.addEventListener('click', closeModal);
+  cancelBtn?.addEventListener('click', closeModal);
+  closeSuccessBtn?.addEventListener('click', () => {
+    closeModal();
+    loadProjects();
+  });
+
+  // Cerrar al hacer click fuera
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  // Cerrar con Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modal.hidden) closeModal();
+  });
+
+  // Image uploader
+  const fileInput = document.getElementById('projImagen');
+  const uploader = document.getElementById('imageUploader');
+  const emptyView = document.getElementById('imageUploaderEmpty');
+  const previewView = document.getElementById('imageUploaderPreview');
+  const previewImg = document.getElementById('imagePreview');
+  const removeBtn = document.getElementById('imageRemoveBtn');
+
+  uploader?.addEventListener('click', (e) => {
+    if (e.target === removeBtn) return;
+    fileInput.click();
+  });
+
+  fileInput?.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    handleImageFile(file);
+  });
+
+  removeBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    clearImagePreview();
+  });
+
+  function handleImageFile(file) {
+    const errorEl = document.getElementById('error-projImagen');
+    errorEl.textContent = '';
+
+    if (!file.type.startsWith('image/')) {
+      errorEl.textContent = 'El archivo debe ser una imagen';
+      return;
+    }
+    if (file.size > MAX_IMAGE_SIZE) {
+      errorEl.textContent = 'La imagen no puede superar 1.5 MB';
+      clearImagePreview();
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      previewImg.src = evt.target.result;
+      emptyView.hidden = true;
+      previewView.hidden = false;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function clearImagePreview() {
+    if (fileInput) fileInput.value = '';
+    if (previewImg) previewImg.src = '';
+    if (emptyView) emptyView.hidden = false;
+    if (previewView) previewView.hidden = true;
+    const errorEl = document.getElementById('error-projImagen');
+    if (errorEl) errorEl.textContent = '';
+  }
+
+  // Submit del formulario
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!validateProjectForm(form)) return;
+
+    const submitBtn = document.getElementById('submitProjectBtn');
+    const btnText = submitBtn.querySelector('.btn-text');
+    const btnSpinner = submitBtn.querySelector('.btn-spinner');
+    submitBtn.disabled = true;
+    btnText.textContent = 'Publicando...';
+    btnSpinner.hidden = false;
+
+    try {
+      const payload = {
+        nombre:      form.nombre.value.trim(),
+        descripcion: form.descripcion.value.trim(),
+        link:        form.link.value.trim(),
+        owner:       form.owner.value.trim(),
+      };
+
+      // Si hay imagen, leerla como base64
+      const file = fileInput.files[0];
+      if (file) {
+        const base64 = await fileToBase64(file);
+        payload.imagen_base64 = base64;
+        payload.imagen_nombre = file.name;
+      }
+
+      const res = await fetch(PROJECTS_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok || !result.success) {
+        throw new Error(result.error || 'Error al guardar el proyecto');
+      }
+
+      form.hidden = true;
+      success.hidden = false;
+    } catch (err) {
+      alert('No se pudo publicar el proyecto: ' + (err.message || 'error desconocido'));
+      console.error(err);
+    } finally {
+      submitBtn.disabled = false;
+      btnText.textContent = 'Publicar proyecto';
+      btnSpinner.hidden = true;
+    }
+  });
+}
+
+function validateProjectForm(form) {
+  clearProjectErrors();
+  let valid = true;
+
+  const fields = [
+    { name: 'nombre',      id: 'error-projNombre',      label: 'nombre' },
+    { name: 'owner',       id: 'error-projOwner',       label: 'owner' },
+    { name: 'descripcion', id: 'error-projDescripcion', label: 'descripción' },
+    { name: 'link',        id: 'error-projLink',        label: 'link' },
+  ];
+
+  fields.forEach(f => {
+    const value = (form[f.name].value || '').trim();
+    if (!value) {
+      document.getElementById(f.id).textContent = `Completa el ${f.label}`;
+      valid = false;
+    }
+  });
+
+  const link = (form.link.value || '').trim();
+  if (link && !/^https?:\/\//i.test(link)) {
+    document.getElementById('error-projLink').textContent = 'El link debe empezar con http:// o https://';
+    valid = false;
+  }
+
+  return valid;
+}
+
+function clearProjectErrors() {
+  ['error-projNombre','error-projOwner','error-projDescripcion','error-projLink','error-projImagen']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.textContent = ''; });
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
+    reader.readAsDataURL(file);
+  });
 }

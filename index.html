@@ -357,6 +357,10 @@
         <div class="hero-badge">AI Transformation Team</div>
         <h1 class="hero-title">Nuestros <span class="accent">Proyectos</span></h1>
         <p class="hero-sub">Explora las herramientas e iniciativas desarrolladas por el equipo. Haz clic en cualquier proyecto para acceder directamente.</p>
+        <button type="button" class="btn btn-primary" id="openProjectModalBtn" style="margin-top: 8px;">
+          <span style="font-size: 1.1rem; font-weight: 700;">＋</span>
+          Agregar proyecto
+        </button>
       </div>
       <div class="hero-grid-bg"></div>
     </section>
@@ -364,50 +368,100 @@
     <!-- Projects Grid -->
     <section class="section">
       <div class="container">
-        <div class="projects-grid">
 
-          <!-- Proyecto: Nexus -->
-          <a href="https://nicolasorjuela195-del.github.io/nexus/nexus_make.html" target="_blank" class="project-card">
-            <div class="project-card-cover project-card-cover-img">
-              <img src="img/nexus-preview.png" alt="NEXUS preview" class="project-card-img" />
-              <span class="project-card-version">v4</span>
-            </div>
-            <div class="project-card-body">
-              <h3 class="project-card-title">NEXUS</h3>
-              <p class="project-card-subtitle">AI Report Generator</p>
-              <p class="project-card-desc">Sube tu Plan Digital en Excel, cruza datos con BigQuery y genera reportes con insights de IA automáticamente.</p>
-              <div class="project-card-footer">
-                <span class="project-card-tag">Reportes</span>
-                <span class="project-card-tag">BigQuery</span>
-                <span class="project-card-tag">IA</span>
-                <span class="project-card-arrow">→</span>
-              </div>
-            </div>
-          </a>
-
-          <!-- Placeholder: Próximamente -->
-          <div class="project-card project-card-soon">
-            <div class="project-card-cover project-card-cover-soon">
-              <div class="project-card-cover-pattern"></div>
-              <div class="project-card-cover-icon">
-                <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="24" cy="24" r="18" stroke="currentColor" stroke-width="2.5" stroke-dasharray="4 4"/>
-                  <path d="M24 16v8l5 5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
-            </div>
-            <div class="project-card-body">
-              <h3 class="project-card-title" style="color: var(--text-dim)">Próximamente</h3>
-              <p class="project-card-subtitle" style="color: var(--text-dim)">Nuevo proyecto en desarrollo</p>
-              <p class="project-card-desc" style="color: var(--text-dim)">Nuevas herramientas del equipo se irán sumando a este repositorio.</p>
-            </div>
-          </div>
-
+        <!-- Loading state -->
+        <div id="projectsLoading" class="projects-loading">
+          <div class="spinner"></div>
+          <span>Cargando proyectos...</span>
         </div>
+
+        <!-- Empty state -->
+        <div id="projectsEmpty" class="projects-empty" hidden>
+          <span class="empty-icon">◈</span>
+          <h3>Aún no hay proyectos cargados</h3>
+          <p>Sé el primero en subir un proyecto del equipo.</p>
+        </div>
+
+        <!-- Dynamic projects grid -->
+        <div class="projects-grid" id="projectsGrid"></div>
+
       </div>
     </section>
 
   </div><!-- /page-projects -->
+
+  <!-- ═══════════════════════════════════════════════════════
+       MODAL — AGREGAR PROYECTO
+  ═══════════════════════════════════════════════════════ -->
+  <div class="modal-overlay" id="projectModal" hidden>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">Agregar nuevo proyecto</h3>
+        <button type="button" class="modal-close" id="closeProjectModalBtn" aria-label="Cerrar">✕</button>
+      </div>
+
+      <form id="projectForm" novalidate>
+        <div class="form-group">
+          <label for="projNombre">Nombre del proyecto <span class="required">*</span></label>
+          <input type="text" id="projNombre" name="nombre" placeholder="Ej. NEXUS" required />
+          <span class="form-error" id="error-projNombre"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="projOwner">Owner / Responsable <span class="required">*</span></label>
+          <input type="text" id="projOwner" name="owner" placeholder="Ej. Nicolás Orjuela" required />
+          <span class="form-error" id="error-projOwner"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="projDescripcion">Descripción <span class="required">*</span></label>
+          <textarea id="projDescripcion" name="descripcion" rows="3" placeholder="Describe brevemente qué hace el proyecto..." required></textarea>
+          <span class="form-error" id="error-projDescripcion"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="projLink">Link de la herramienta <span class="required">*</span></label>
+          <input type="text" id="projLink" name="link" placeholder="https://..." required />
+          <span class="form-error" id="error-projLink"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="projImagen">Imagen de portada</label>
+          <div class="image-uploader" id="imageUploader">
+            <input type="file" id="projImagen" name="imagen" accept="image/png,image/jpeg,image/jpg,image/webp" hidden />
+            <div class="image-uploader-empty" id="imageUploaderEmpty">
+              <span class="image-uploader-icon">🖼️</span>
+              <span class="image-uploader-text">Haz clic para subir una imagen</span>
+              <span class="image-uploader-hint">PNG, JPG o WEBP · máx 1.5 MB</span>
+            </div>
+            <div class="image-uploader-preview" id="imageUploaderPreview" hidden>
+              <img id="imagePreview" alt="Preview" />
+              <button type="button" class="image-uploader-remove" id="imageRemoveBtn">✕</button>
+            </div>
+          </div>
+          <span class="form-error" id="error-projImagen"></span>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" id="cancelProjectBtn">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="submitProjectBtn">
+            <span class="btn-text">Publicar proyecto</span>
+            <span class="btn-spinner" hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            </span>
+          </button>
+        </div>
+      </form>
+
+      <!-- Success state -->
+      <div id="projectSuccess" class="form-success" hidden>
+        <div class="success-icon">✓</div>
+        <h3>¡Proyecto publicado!</h3>
+        <p>Tu proyecto ya aparece en el catálogo del equipo.</p>
+        <button type="button" class="btn btn-outline" id="closeSuccessBtn">Listo</button>
+      </div>
+    </div>
+  </div>
 
   <!-- FOOTER -->
   <footer class="footer">
