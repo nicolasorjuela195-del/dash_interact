@@ -659,6 +659,7 @@ a.project-card:hover .project-card-arrow { transform: translateX(4px); }
   overflow-y: auto;
   animation: modalFadeIn 0.2s ease-out;
 }
+.modal-overlay[hidden] { display: none !important; }
 @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 .modal-box {
