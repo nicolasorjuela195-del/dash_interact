@@ -630,6 +630,11 @@ a.project-card:hover .project-card-arrow { transform: translateX(4px); }
   display: flex; flex-direction: column; align-items: center; gap: 16px;
   padding: 60px 20px; color: var(--text-muted); font-size: 0.9rem;
 }
+.projects-loading[hidden] { display: none !important; }
+.projects-empty[hidden] { display: none !important; }
+.image-uploader-empty[hidden],
+.image-uploader-preview[hidden],
+.form-success[hidden] { display: none !important; }
 .spinner {
   width: 32px; height: 32px;
   border: 2.5px solid var(--border);
